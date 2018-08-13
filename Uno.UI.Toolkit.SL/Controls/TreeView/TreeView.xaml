@@ -8,16 +8,14 @@
 <ResourceDictionary
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:controls="clr-namespace:System.Windows.Controls"
-  xmlns:vsm="clr-namespace:System.Windows;assembly=System.Windows"
-  xmlns:system="clr-namespace:System;assembly=mscorlib">
+  xmlns:controls="using:System.Windows.Controls">
 
     <Style TargetType="controls:TreeView">
         <Setter Property="Background" Value="#FFFFFFFF" />
         <Setter Property="Foreground" Value="#FF000000" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Top" />
-        <Setter Property="Cursor" Value="Arrow" />
+        <!--<Setter Property="Cursor" Value="Arrow" />-->
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="1" />
         <Setter Property="BorderBrush" Value="#FF000000" />
@@ -27,20 +25,20 @@
             <Setter.Value>
                 <ControlTemplate TargetType="controls:TreeView">
                     <Grid>
-                        <vsm:VisualStateManager.VisualStateGroups>
-                            <vsm:VisualStateGroup x:Name="CommonStates">
-                                <vsm:VisualState x:Name="Normal" />
-                                <vsm:VisualState x:Name="MouseOver" />
-                                <vsm:VisualState x:Name="Pressed" />
-                                <vsm:VisualState x:Name="Disabled" />
-                            </vsm:VisualStateGroup>
-                            <vsm:VisualStateGroup x:Name="FocusStates">
-                                <vsm:VisualState x:Name="Unfocused" />
-                                <vsm:VisualState x:Name="Focused" />
-                            </vsm:VisualStateGroup>
-                            <vsm:VisualStateGroup x:Name="ValidationStates" >
-                                <vsm:VisualState x:Name="Valid" />
-                                <vsm:VisualState x:Name="InvalidUnfocused">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver" />
+                                <VisualState x:Name="Pressed" />
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="FocusStates">
+                                <VisualState x:Name="Unfocused" />
+                                <VisualState x:Name="Focused" />
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="ValidationStates" >
+                                <VisualState x:Name="Valid" />
+                                <VisualState x:Name="InvalidUnfocused">
                                     <Storyboard>
                                         <ObjectAnimationUsingKeyFrames
                                           Storyboard.TargetName="Validation"
@@ -48,8 +46,8 @@
                                             <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
-                                </vsm:VisualState>
-                                <vsm:VisualState x:Name="InvalidFocused">
+                                </VisualState>
+                                <VisualState x:Name="InvalidFocused">
                                     <Storyboard>
                                         <ObjectAnimationUsingKeyFrames
                                           Storyboard.TargetName="Validation"
@@ -61,14 +59,14 @@
                                           Storyboard.TargetProperty="IsOpen">
                                             <DiscreteObjectKeyFrame KeyTime="0">
                                                 <DiscreteObjectKeyFrame.Value>
-                                                    <system:Boolean>True</system:Boolean>
+                                                    <x:Boolean>True</x:Boolean>
                                                 </DiscreteObjectKeyFrame.Value>
                                             </DiscreteObjectKeyFrame>
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
-                                </vsm:VisualState>
-                            </vsm:VisualStateGroup>
-                        </vsm:VisualStateManager.VisualStateGroups>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
                         
                         <Border
                           BorderBrush="{TemplateBinding BorderBrush}"

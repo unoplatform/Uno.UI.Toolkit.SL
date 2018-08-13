@@ -5,6 +5,7 @@
 
 using System;
 using System.Windows;
+using Windows.UI.Xaml;
 
 namespace System.Windows.Controls
 {
@@ -82,7 +83,7 @@ namespace System.Windows.Controls
                 }
                 else if (value)
                 {
-                    throw new InvalidOperationException(Properties.Resources.RoutedPropertyChangingEventArgs_CancelSet_InvalidOperation);
+                    throw new InvalidOperationException(/*Properties.Resources.RoutedPropertyChangingEventArgs_CancelSet_InvalidOperation*/);
                 }
             }
         }

@@ -9,8 +9,12 @@ using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Automation.Peers;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using Windows.Foundation.Collections;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Automation.Peers;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
 
 namespace System.Windows.Controls
 {
@@ -96,18 +100,18 @@ namespace System.Windows.Controls
             get { return _headerElement; }
             private set
             {
-                // Detach from the old Header element
-                if (_headerElement != null)
-                {
-                    _headerElement.MouseLeftButtonDown -= OnHeaderMouseLeftButtonDown;
-                }
+                //// Detach from the old Header element
+                //if (_headerElement != null)
+                //{
+                //    _headerElement.MouseLeftButtonDown -= OnHeaderMouseLeftButtonDown;
+                //}
 
-                // Attach to the new Header element
-                _headerElement = value;
-                if (_headerElement != null)
-                {
-                    _headerElement.MouseLeftButtonDown += OnHeaderMouseLeftButtonDown;
-                }
+                //// Attach to the new Header element
+                //_headerElement = value;
+                //if (_headerElement != null)
+                //{
+                //    _headerElement.MouseLeftButtonDown += OnHeaderMouseLeftButtonDown;
+                //}
             }
         }
 
@@ -223,7 +227,7 @@ namespace System.Windows.Controls
                 source.SetValue(HasItemsProperty, e.OldValue);
 
                 throw new InvalidOperationException(
-                    Properties.Resources.TreeViewItem_OnHasItemsPropertyChanged_InvalidWrite);
+                    /*Properties.Resources.TreeViewItem_OnHasItemsPropertyChanged_InvalidWrite*/);
             }
 
             source.UpdateVisualState(true);
@@ -277,8 +281,8 @@ namespace System.Windows.Controls
             TreeViewItem source = d as TreeViewItem;
             bool isExpanded = (bool) e.NewValue;
 
-            // Notify any automation peers of the expansion change
-            TreeViewItemAutomationPeer peer = FrameworkElementAutomationPeer.FromElement(source) as TreeViewItemAutomationPeer;
+			// Notify any automation peers of the expansion change
+			Automation.Peers.TreeViewItemAutomationPeer peer = FrameworkElementAutomationPeer.FromElement(source) as Automation.Peers.TreeViewItemAutomationPeer;
             if (peer != null)
             {
                 peer.RaiseExpandCollapseAutomationEvent((bool) e.OldValue, isExpanded);
@@ -317,7 +321,7 @@ namespace System.Windows.Controls
             else if (source.ContainsSelection)
             {
                 // Select the this item if it collapsed the selected item
-                source.Focus();
+                source.Focus(FocusState.Programmatic);
             }
         }
         #endregion public bool IsExpanded
@@ -373,8 +377,8 @@ namespace System.Windows.Controls
 
             source.Select(isSelected);
 
-            // Notify any automation peers of the selection change
-            TreeViewItemAutomationPeer peer = FrameworkElementAutomationPeer.FromElement(source) as TreeViewItemAutomationPeer;
+			// Notify any automation peers of the selection change
+			Automation.Peers.TreeViewItemAutomationPeer peer = FrameworkElementAutomationPeer.FromElement(source) as Automation.Peers.TreeViewItemAutomationPeer;
             if (peer != null)
             {
                 peer.RaiseAutomationIsSelectedChanged(isSelected);
@@ -459,7 +463,7 @@ namespace System.Windows.Controls
                 source.SetValue(IsSelectionActiveProperty, e.OldValue);
 
                 throw new InvalidOperationException(
-                    Properties.Resources.TreeViewItem_OnIsSelectionActivePropertyChanged_InvalidWrite);
+                    /*Properties.Resources.TreeViewItem_OnIsSelectionActivePropertyChanged_InvalidWrite*/);
             }
 
             source.UpdateVisualState(true);
@@ -625,6 +629,8 @@ namespace System.Windows.Controls
         {
             DefaultStyleKey = typeof(TreeViewItem);
             Interaction = new InteractionHelper(this);
+
+			Items.VectorChanged += OnItemsChanged;
         }
 
         /// <summary>
@@ -640,7 +646,7 @@ namespace System.Windows.Controls
         /// </returns>
         protected override AutomationPeer OnCreateAutomationPeer()
         {
-            return new TreeViewItemAutomationPeer(this);
+            return new Automation.Peers.TreeViewItemAutomationPeer(this);
         }
 
         #region Templating
@@ -649,7 +655,7 @@ namespace System.Windows.Controls
         /// <see cref="T:System.Windows.Controls.TreeViewItem" /> control when a
         /// new control template is applied.
         /// </summary>
-        public override void OnApplyTemplate()
+        protected override void OnApplyTemplate()
         {
             ItemsControlHelper.OnApplyTemplate();
 
@@ -693,18 +699,22 @@ namespace System.Windows.Controls
                 TreeView parent = ParentTreeView;
                 if (parent != null)
                 {
-                    // The child items aren't necessarily in the visual tree yet
-                    // so we wait for two ticks to pass before trying to scroll
-                    // so there size will be respected.
-                    Dispatcher.BeginInvoke(() =>
-                    {
-                        Dispatcher.BeginInvoke(() =>
-                        {
-                            // Note that we scroll the entire TreeViewItem into view,
-                            // not just its HeaderElement.
-                            parent.ItemsControlHelper.ScrollIntoView(this);
-                        });
-                    });
+					// The child items aren't necessarily in the visual tree yet
+					// so we wait for two ticks to pass before trying to scroll
+					// so there size will be respected.
+					Dispatcher.RunAsync(
+						global::Windows.UI.Core.CoreDispatcherPriority.Normal,
+						() =>
+						{
+							Dispatcher.RunAsync(
+							global::Windows.UI.Core.CoreDispatcherPriority.Normal,
+							() =>
+							{
+									// Note that we scroll the entire TreeViewItem into view,
+									// not just its HeaderElement.
+									parent.ItemsControlHelper.ScrollIntoView(this);
+							});
+						});
                 }
             }
         }
@@ -855,30 +865,21 @@ namespace System.Windows.Controls
         /// <see cref="T:System.Collections.Specialized.NotifyCollectionChangedEventArgs" />
         /// that contains data about the change.
         /// </param>
-        protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
+        protected void OnItemsChanged(object sender, IVectorChangedEventArgs @event)
         {
-            if (e == null)
-            {
-                throw new ArgumentNullException("e");
-            }
-
-            base.OnItemsChanged(e);
             HasItems = Items.Count > 0;
 
             // Associate any TreeViewItems with their parent
-            if (e.NewItems != null)
+            foreach (TreeViewItem item in Items)
             {
-                foreach (TreeViewItem item in e.NewItems.OfType<TreeViewItem>())
-                {
-                    item.ParentItemsControl = this;
-                }
+                item.ParentItemsControl = this;
             }
 
             TreeView parentTreeView = null;
-            switch (e.Action)
+            switch (@event.CollectionChange)
             {
-                case NotifyCollectionChangedAction.Remove:
-                case NotifyCollectionChangedAction.Reset:
+                case CollectionChange.ItemRemoved:
+                case CollectionChange.Reset:
                     if (!ContainsSelection)
                     {
                         break;
@@ -891,34 +892,16 @@ namespace System.Windows.Controls
                     ContainsSelection = false;
                     Select(true);
                     break;
-
-                case NotifyCollectionChangedAction.Replace:
-                    if (!ContainsSelection)
-                    {
-                        break;
-                    }
-                    parentTreeView = ParentTreeView;
-                    if (parentTreeView == null)
-                    {
-                        break;
-                    }
-                    object selectedItem = parentTreeView.SelectedItem;
-                    if (selectedItem == null || (e.OldItems != null && !object.Equals(selectedItem, e.OldItems[0])))
-                    {
-                        break;
-                    }
-                    parentTreeView.ChangeSelection(selectedItem, parentTreeView.SelectedContainer, false);
-                    break;
             }
 
             // Remove the association with the Parent ItemsControl
-            if (e.OldItems != null)
-            {
-                foreach (TreeViewItem item in e.OldItems.OfType<TreeViewItem>())
-                {
-                    item.ParentItemsControl = null;
-                }
-            }
+            //if (e.OldItems != null)
+            //{
+            //    foreach (TreeViewItem item in e.OldItems.OfType<TreeViewItem>())
+            //    {
+            //        item.ParentItemsControl = null;
+            //    }
+            //}
         }
         #endregion ItemsControl
 
@@ -1106,14 +1089,14 @@ namespace System.Windows.Controls
         /// A <see cref="T:System.Windows.Input.MouseEventArgs" /> that contains
         /// the event data.
         /// </param>
-        protected override void OnMouseEnter(MouseEventArgs e)
-        {
-            if (Interaction.AllowMouseEnter(e))
-            {
-                Interaction.OnMouseEnterBase();
-                base.OnMouseEnter(e);
-            }
-        }
+        //protected override void OnMouseEnter(MouseEventArgs e)
+        //{
+        //    if (Interaction.AllowMouseEnter(e))
+        //    {
+        //        Interaction.OnMouseEnterBase();
+        //        base.OnMouseEnter(e);
+        //    }
+        //}
 
         /// <summary>
         /// Provides handling for the
@@ -1123,49 +1106,49 @@ namespace System.Windows.Controls
         /// A <see cref="T:System.Windows.Input.MouseEventArgs" /> that contains
         /// the event data.
         /// </param>
-        protected override void OnMouseLeave(MouseEventArgs e)
-        {
-            if (Interaction.AllowMouseLeave(e))
-            {
-                Interaction.OnMouseLeaveBase();
-                base.OnMouseLeave(e);
-            }
-        }
+        //protected override void OnMouseLeave(MouseEventArgs e)
+        //{
+        //    if (Interaction.AllowMouseLeave(e))
+        //    {
+        //        Interaction.OnMouseLeaveBase();
+        //        base.OnMouseLeave(e);
+        //    }
+        //}
 
         /// <summary>
         /// Provides handling for the Header's MouseLeftButtonDown event.
         /// </summary>
         /// <param name="sender">The Header template part.</param>
         /// <param name="e">Event arguments.</param>
-        private void OnHeaderMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (Interaction.AllowMouseLeftButtonDown(e))
-            {
-                // If the event hasn't already been handled and this item is
-                // focusable, then focus (and possibly expand if it was double
-                // clicked)
-                if (!e.Handled && IsEnabled)
-                {
-                    if (Focus())
-                    {
-                        e.Handled = true;
-                    }
+        //private void OnHeaderMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        //{
+        //    if (Interaction.AllowMouseLeftButtonDown(e))
+        //    {
+        //        // If the event hasn't already been handled and this item is
+        //        // focusable, then focus (and possibly expand if it was double
+        //        // clicked)
+        //        if (!e.Handled && IsEnabled)
+        //        {
+        //            if (Focus())
+        //            {
+        //                e.Handled = true;
+        //            }
 
-                    // Expand the item when double clicked
-                    if (Interaction.ClickCount % 2 == 0)
-                    {
-                        bool opened = !IsExpanded;
-                        UserInitiatedExpansion |= opened;
-                        IsExpanded = opened;
+        //            // Expand the item when double clicked
+        //            if (Interaction.ClickCount % 2 == 0)
+        //            {
+        //                bool opened = !IsExpanded;
+        //                UserInitiatedExpansion |= opened;
+        //                IsExpanded = opened;
 
-                        e.Handled = true;
-                    }
-                }
+        //                e.Handled = true;
+        //            }
+        //        }
 
-                Interaction.OnMouseLeftButtonDownBase();
-                OnMouseLeftButtonDown(e);
-            }
-        }
+        //        Interaction.OnMouseLeftButtonDownBase();
+        //        OnMouseLeftButtonDown(e);
+        //    }
+        //}
 
         /// <summary>
         /// Provides handling for the ExpanderButton's Click event.
@@ -1187,21 +1170,21 @@ namespace System.Windows.Controls
         /// A <see cref="T:System.Windows.Input.MouseButtonEventArgs" /> that
         /// contains the event data.
         /// </param>
-        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
-        {
-            if (e == null)
-            {
-                throw new ArgumentNullException("e");
-            }
+        //protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        //{
+        //    if (e == null)
+        //    {
+        //        throw new ArgumentNullException("e");
+        //    }
 
-            TreeView parent;
-            if (!e.Handled && (parent = ParentTreeView) != null && parent.HandleMouseButtonDown())
-            {
-                e.Handled = true;
-            }
+        //    TreeView parent;
+        //    if (!e.Handled && (parent = ParentTreeView) != null && parent.HandleMouseButtonDown())
+        //    {
+        //        e.Handled = true;
+        //    }
 
-            base.OnMouseLeftButtonDown(e);
-        }
+        //    base.OnMouseLeftButtonDown(e);
+        //}
 
         /// <summary>
         /// Provides handling for the
@@ -1211,14 +1194,14 @@ namespace System.Windows.Controls
         /// A <see cref="T:System.Windows.Input.MouseButtonEventArgs" /> that
         /// contains the event data.
         /// </param>
-        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
-        {
-            if (Interaction.AllowMouseLeftButtonUp(e))
-            {
-                Interaction.OnMouseLeftButtonUpBase();
-                base.OnMouseLeftButtonUp(e);
-            }
-        }
+        //protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        //{
+        //    if (Interaction.AllowMouseLeftButtonUp(e))
+        //    {
+        //        Interaction.OnMouseLeftButtonUpBase();
+        //        base.OnMouseLeftButtonUp(e);
+        //    }
+        //}
 
         /// <summary>
         /// Provides handling for the
@@ -1229,108 +1212,108 @@ namespace System.Windows.Controls
         /// A <see cref="T:System.Windows.Input.KeyEventArgs" /> that contains
         /// the event data.
         /// </param>
-        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Complexity metric is inflated by the switch statements")]
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            base.OnKeyDown(e);
+        //[SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Complexity metric is inflated by the switch statements")]
+        //protected override void OnKeyDown(KeyEventArgs e)
+        //{
+        //    base.OnKeyDown(e);
 
-            if (Interaction.AllowKeyDown(e))
-            {
-                if (e.Handled)
-                {
-                    return;
-                }
+        //    if (Interaction.AllowKeyDown(e))
+        //    {
+        //        if (e.Handled)
+        //        {
+        //            return;
+        //        }
 
-                // Some keys (e.g. Left/Right) need to be translated in RightToLeft mode
-                Key invariantKey = InteractionHelper.GetLogicalKey(FlowDirection, e.Key);
+        //        // Some keys (e.g. Left/Right) need to be translated in RightToLeft mode
+        //        Key invariantKey = InteractionHelper.GetLogicalKey(FlowDirection, e.Key);
 
-                // We ignore the Control modifier key because it is used
-                // specifically for scrolling which is implemented in the
-                // TreeView. We do not mark the event handled if Control is
-                // pressed so that it will bubble up to the parent TreeView of
-                // this item.
-                switch (invariantKey)
-                {
-                    case Key.Left:
-                        // The Left key will collapse an expanded item or
-                        // move to the parent if the item is already
-                        // collapsed.
-                        if (!TreeView.IsControlKeyDown && CanExpandOnInput && IsExpanded)
-                        {
-                            if (FocusManager.GetFocusedElement() != this)
-                            {
-                                Focus();
-                            }
-                            else
-                            {
-                                IsExpanded = false;
-                            }
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.Right:
-                        // The Right key is only useful when the item has
-                        // children
-                        if (!TreeView.IsControlKeyDown && CanExpandOnInput)
-                        {
-                            // Expand the item if it is collapsed or move into
-                            // the first child if it is already expanded.
-                            if (!IsExpanded)
-                            {
-                                UserInitiatedExpansion = true;
-                                IsExpanded = true;
-                                e.Handled = true;
-                            }
-                            else if (HandleDownKey())
-                            {
-                                e.Handled = true;
-                            }
-                        }
-                        break;
-                    case Key.Up:
-                        if (!TreeView.IsControlKeyDown && HandleUpKey())
-                        {
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.Down:
-                        if (!TreeView.IsControlKeyDown && HandleDownKey())
-                        {
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.Add:
-                        if (CanExpandOnInput && !IsExpanded)
-                        {
-                            UserInitiatedExpansion = true;
-                            IsExpanded = true;
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.Subtract:
-                        if (CanExpandOnInput && IsExpanded)
-                        {
-                            IsExpanded = false;
-                            e.Handled = true;
-                        }
-                        break;
-                }
-            }
+        //        // We ignore the Control modifier key because it is used
+        //        // specifically for scrolling which is implemented in the
+        //        // TreeView. We do not mark the event handled if Control is
+        //        // pressed so that it will bubble up to the parent TreeView of
+        //        // this item.
+        //        switch (invariantKey)
+        //        {
+        //            case Key.Left:
+        //                // The Left key will collapse an expanded item or
+        //                // move to the parent if the item is already
+        //                // collapsed.
+        //                if (!TreeView.IsControlKeyDown && CanExpandOnInput && IsExpanded)
+        //                {
+        //                    if (FocusManager.GetFocusedElement() != this)
+        //                    {
+        //                        Focus();
+        //                    }
+        //                    else
+        //                    {
+        //                        IsExpanded = false;
+        //                    }
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //            case Key.Right:
+        //                // The Right key is only useful when the item has
+        //                // children
+        //                if (!TreeView.IsControlKeyDown && CanExpandOnInput)
+        //                {
+        //                    // Expand the item if it is collapsed or move into
+        //                    // the first child if it is already expanded.
+        //                    if (!IsExpanded)
+        //                    {
+        //                        UserInitiatedExpansion = true;
+        //                        IsExpanded = true;
+        //                        e.Handled = true;
+        //                    }
+        //                    else if (HandleDownKey())
+        //                    {
+        //                        e.Handled = true;
+        //                    }
+        //                }
+        //                break;
+        //            case Key.Up:
+        //                if (!TreeView.IsControlKeyDown && HandleUpKey())
+        //                {
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //            case Key.Down:
+        //                if (!TreeView.IsControlKeyDown && HandleDownKey())
+        //                {
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //            case Key.Add:
+        //                if (CanExpandOnInput && !IsExpanded)
+        //                {
+        //                    UserInitiatedExpansion = true;
+        //                    IsExpanded = true;
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //            case Key.Subtract:
+        //                if (CanExpandOnInput && IsExpanded)
+        //                {
+        //                    IsExpanded = false;
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //        }
+        //    }
 
-            // Because Silverlight's ScrollViewer swallows many useful key
-            // events (which it can ignore on WPF if you override
-            // HandlesScrolling or use an internal only variable in
-            // Silverlight), the root TreeViewItems explicitly propagate KeyDown
-            // events to their parent TreeView.
-            if (IsRoot)
-            {
-                TreeView parent = ParentTreeView;
-                if (parent != null)
-                {
-                    parent.PropagateKeyDown(e);
-                }
-            }
-        }
+        //    // Because Silverlight's ScrollViewer swallows many useful key
+        //    // events (which it can ignore on WPF if you override
+        //    // HandlesScrolling or use an internal only variable in
+        //    // Silverlight), the root TreeViewItems explicitly propagate KeyDown
+        //    // events to their parent TreeView.
+        //    if (IsRoot)
+        //    {
+        //        TreeView parent = ParentTreeView;
+        //        if (parent != null)
+        //        {
+        //            parent.PropagateKeyDown(e);
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Try moving the focus down from the selected item.
@@ -1352,13 +1335,13 @@ namespace System.Windows.Controls
         /// A <see cref="T:System.Windows.Input.KeyEventArgs" /> that contains
         /// the event data.
         /// </param>
-        protected override void OnKeyUp(KeyEventArgs e)
-        {
-            if (Interaction.AllowKeyUp(e))
-            {
-                base.OnKeyUp(e);
-            }
-        }
+        //protected override void OnKeyUp(KeyEventArgs e)
+        //{
+        //    if (Interaction.AllowKeyUp(e))
+        //    {
+        //        base.OnKeyUp(e);
+        //    }
+        //}
 
         /// <summary>
         /// Try moving the focus up from the selected item.
@@ -1378,7 +1361,7 @@ namespace System.Windows.Controls
                 if (control != null)
                 {
                     // Try to focus the item unless it's the parent TreeView
-                    return (control == ParentItemsControl && control == ParentTreeView) || control.Focus();
+                    return (control == ParentItemsControl && control == ParentTreeView) || control.Focus(FocusState.Programmatic);
                 }
             }
             return false;
@@ -1478,7 +1461,7 @@ namespace System.Windows.Controls
                 {
                     if (up)
                     {
-                        return selected.Focus();
+                        return selected.Focus(FocusState.Programmatic);
                     }
                     else
                     {
@@ -1489,7 +1472,7 @@ namespace System.Windows.Controls
                 {
                     // If none of the children fit but the header is in view,
                     // then we'll select this TreeViewItem.
-                    return Focus();
+                    return Focus(FocusState.Programmatic);
                 }
             }
 
@@ -1597,7 +1580,7 @@ namespace System.Windows.Controls
         internal bool FocusDown()
         {
             TreeViewItem item = FindNextFocusableItem(true);
-            return item != null && item.Focus();
+            return item != null && item.Focus(FocusState.Programmatic);
         }
 
         /// <summary>
@@ -1610,7 +1593,7 @@ namespace System.Windows.Controls
         internal bool FocusInto()
         {
             TreeViewItem last = FindLastFocusableItem();
-            return last != null && last.Focus();
+            return last != null && last.Focus(FocusState.Programmatic);
         }
 
         /// <summary>

@@ -7,7 +7,10 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
+using Windows.Foundation;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 
 namespace System.Windows.Controls
 {
@@ -165,8 +168,8 @@ namespace System.Windows.Controls
             Debug.Assert(parent != null, "parent should not be null!");
 
             GeneralTransform transform = element.TransformToVisual(parent);
-            top = transform.Transform(new Point(0, 0)).Y;
-            bottom = transform.Transform(new Point(0, element.ActualHeight)).Y;
+            top = transform.TransformPoint(new Point(0, 0)).Y;
+            bottom = transform.TransformPoint(new Point(0, element.ActualHeight)).Y;
         }
     }
 }

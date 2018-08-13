@@ -10,8 +10,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Media;
+using Windows.Foundation;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 
 namespace System.Windows.Controls
 {
@@ -200,8 +202,8 @@ namespace System.Windows.Controls
                 return;
             }
             Rect itemRect = new Rect(
-                transform.Transform(new Point()),
-                transform.Transform(new Point(element.ActualWidth, element.ActualHeight)));
+                transform.TransformPoint(new Point()),
+                transform.TransformPoint(new Point(element.ActualWidth, element.ActualHeight)));
 
             // Scroll vertically
             double verticalOffset = scrollHost.VerticalOffset;

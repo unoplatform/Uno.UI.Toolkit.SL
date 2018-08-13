@@ -10,8 +10,12 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Automation.Peers;
-using System.Windows.Data;
-using System.Windows.Input;
+using Windows.Foundation.Collections;
+using Windows.UI.Core;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Automation.Peers;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Data;
 
 namespace System.Windows.Controls
 {
@@ -31,7 +35,7 @@ namespace System.Windows.Controls
     [TemplateVisualState(Name = VisualStates.StateInvalidUnfocused, GroupName = VisualStates.GroupValidation)]
     [StyleTypedProperty(Property = "ItemContainerStyle", StyleTargetType = typeof(TreeViewItem))]
     public partial class TreeView : ItemsControl, IUpdateVisualState
-    {
+	{
         /// <summary>
         /// A value indicating whether a read-only dependency property change
         /// handler should allow the value to be set.  This is used to ensure
@@ -114,7 +118,7 @@ namespace System.Windows.Controls
                 source.SetValue(SelectedItemProperty, e.OldValue);
 
                 throw new InvalidOperationException(
-                    Properties.Resources.TreeView_OnSelectedItemPropertyChanged_InvalidWrite);
+                    /*Properties.Resources.TreeView_OnSelectedItemPropertyChanged_InvalidWrite*/);
             }
 
             source.UpdateSelectedValue(e.NewValue);
@@ -194,7 +198,7 @@ namespace System.Windows.Controls
                 source.SetValue(SelectedValueProperty, e.OldValue);
 
                 throw new InvalidOperationException(
-                    Properties.Resources.TreeView_OnSelectedValuePropertyChanged_InvalidWrite);
+                    /*Properties.Resources.TreeView_OnSelectedValuePropertyChanged_InvalidWrite*/);
             }
         }
         #endregion public object SelectedValue
@@ -334,7 +338,7 @@ namespace System.Windows.Controls
         /// </summary>
         internal static bool IsControlKeyDown
         {
-            get { return (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control; }
+            get => false ;// { return (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control; }
         }
 
         /// <summary>
@@ -342,7 +346,7 @@ namespace System.Windows.Controls
         /// </summary>
         internal static bool IsShiftKeyDown
         {
-            get { return (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift; }
+			get => false; // { return (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift; }
         }
 
         /// <summary>
@@ -350,7 +354,7 @@ namespace System.Windows.Controls
         /// <see cref="P:System.Windows.Controls.TreeView.SelectedItem" />
         /// property changes.
         /// </summary>
-        public event RoutedPropertyChangedEventHandler<object> SelectedItemChanged;
+        public event EventHandler<object> SelectedItemChanged;
 
         /// <summary>
         /// Initializes a new instance of the
@@ -361,6 +365,8 @@ namespace System.Windows.Controls
             DefaultStyleKey = typeof(TreeView);
             ItemsControlHelper = new ItemsControlHelper(this);
             Interaction = new InteractionHelper(this);
+
+			Items.VectorChanged += OnItemsChanged;
         }
 
         /// <summary>
@@ -383,7 +389,7 @@ namespace System.Windows.Controls
         /// <see cref="T:System.Windows.Controls.TreeView" /> control when a new
         /// control template is applied.
         /// </summary>
-        public override void OnApplyTemplate()
+        protected override void OnApplyTemplate()
         {
             ItemsControlHelper.OnApplyTemplate();
             Interaction.OnApplyTemplateBase();
@@ -490,52 +496,33 @@ namespace System.Windows.Controls
         /// <see cref="T:System.Collections.Specialized.NotifyCollectionChangedEventArgs" />
         /// that contains data about the change.
         /// </param>
-        protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
+        protected void OnItemsChanged(object sender, IVectorChangedEventArgs e)
         {
             if (e == null)
             {
                 throw new ArgumentNullException("e");
             }
-
-            base.OnItemsChanged(e);
+		
 
             // Associate any TreeViewItems with their parent
-            if (e.NewItems != null)
+            foreach (TreeViewItem item in Items.OfType<TreeViewItem>())
             {
-                foreach (TreeViewItem item in e.NewItems.OfType<TreeViewItem>())
-                {
-                    item.ParentItemsControl = this;
-                }
+                item.ParentItemsControl = this;
             }
 
-            switch (e.Action)
+            switch (e.CollectionChange)
             {
-                case NotifyCollectionChangedAction.Remove:
-                case NotifyCollectionChangedAction.Reset:
+				case CollectionChange.ItemInserted:
+					break;
+
+				case CollectionChange.ItemRemoved:
+                case CollectionChange.Reset:
                     if (SelectedItem == null || IsSelectedContainerHookedUp)
                     {
                         break;
                     }
                     SelectFirstItem();
                     break;
-
-                case NotifyCollectionChangedAction.Replace:
-                    object selectedItem = SelectedItem;
-                    if (selectedItem == null || (e.OldItems != null && !object.Equals(selectedItem, e.OldItems[0])))
-                    {
-                        break;
-                    }
-                    ChangeSelection(selectedItem, SelectedContainer, false);
-                    break;
-            }
-
-            // Remove the association with the Parent ItemsControl
-            if (e.OldItems != null)
-            {
-                foreach (TreeViewItem item in e.OldItems.OfType<TreeViewItem>())
-                {
-                    item.ParentItemsControl = null;
-                }
             }
         }
 
@@ -545,7 +532,7 @@ namespace System.Windows.Controls
         /// <param name="item">The added item.</param>
         internal void CheckForSelectedDescendents(TreeViewItem item)
         {
-            Debug.Assert(item != null, "item should not be null!");
+            System.Diagnostics.Debug.Assert(item != null, "item should not be null!");
 
             Stack<TreeViewItem> items = new Stack<TreeViewItem>();
             items.Push(item);
@@ -594,431 +581,431 @@ namespace System.Windows.Controls
         /// an internal only variable in Silverlight), the root TreeViewItems
         /// explicitly propagate KeyDown events to their parent TreeView.
         /// </remarks>
-        internal void PropagateKeyDown(KeyEventArgs e)
-        {
-            OnKeyDown(e);
-        }
+        //internal void PropagateKeyDown(KeyEventArgs e)
+        //{
+        //    OnKeyDown(e);
+        //}
 
-        /// <summary>
-        /// Provides handling for the
-        /// <see cref="E:System.Windows.UIElement.KeyDown" /> event when a key
-        /// is pressed while the control has focus.
-        /// </summary>
-        /// <param name="e">
-        /// A <see cref="T:System.Windows.Input.KeyEventArgs" /> that contains
-        /// the event data.
-        /// </param>
-        /// <exception cref="T:System.ArgumentNullException">
-        /// <paramref name="e " />is null.
-        /// </exception>
-        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Complexity metric is inflated by the switch statements")]
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            if (!Interaction.AllowKeyDown(e))
-            {
-                return;
-            }
+        ///// <summary>
+        ///// Provides handling for the
+        ///// <see cref="E:System.Windows.UIElement.KeyDown" /> event when a key
+        ///// is pressed while the control has focus.
+        ///// </summary>
+        ///// <param name="e">
+        ///// A <see cref="T:System.Windows.Input.KeyEventArgs" /> that contains
+        ///// the event data.
+        ///// </param>
+        ///// <exception cref="T:System.ArgumentNullException">
+        ///// <paramref name="e " />is null.
+        ///// </exception>
+        //[SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Complexity metric is inflated by the switch statements")]
+        //protected override void OnKeyDown(KeyEventArgs e)
+        //{
+        //    if (!Interaction.AllowKeyDown(e))
+        //    {
+        //        return;
+        //    }
 
-            base.OnKeyDown(e);
+        //    base.OnKeyDown(e);
 
-            if (e.Handled)
-            {
-                return;
-            }
+        //    if (e.Handled)
+        //    {
+        //        return;
+        //    }
 
-            // The Control key modifier is used to scroll the viewer instead of
-            // the selection
-            if (IsControlKeyDown)
-            {
-                switch (e.Key)
-                {
-                    case Key.Home:
-                    case Key.End:
-                    case Key.PageUp:
-                    case Key.PageDown:
-                    case Key.Left:
-                    case Key.Right:
-                    case Key.Up:
-                    case Key.Down:
-                        if (HandleScrollKeys(e.Key))
-                        {
-                            e.Handled = true;
-                        }
-                        break;
-                }
-            }
-            else
-            {
-                switch (e.Key)
-                {
-                    case Key.PageUp:
-                    case Key.PageDown:
-                        if (SelectedContainer != null)
-                        {
-                            if (HandleScrollByPage(e.Key == Key.PageUp))
-                            {
-                                e.Handled = true;
-                            }
-                            break;
-                        }
-                        if (FocusFirstItem())
-                        {
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.Home:
-                        if (FocusFirstItem())
-                        {
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.End:
-                        if (FocusLastItem())
-                        {
-                            e.Handled = true;
-                        }
-                        break;
-                    case Key.Up:
-                    case Key.Down:
-                        if (SelectedContainer == null && FocusFirstItem())
-                        {
-                            e.Handled = true;
-                        }
-                        break;
-                }
-            }
-        }
+        //    // The Control key modifier is used to scroll the viewer instead of
+        //    // the selection
+        //    if (IsControlKeyDown)
+        //    {
+        //        switch (e.Key)
+        //        {
+        //            case Key.Home:
+        //            case Key.End:
+        //            case Key.PageUp:
+        //            case Key.PageDown:
+        //            case Key.Left:
+        //            case Key.Right:
+        //            case Key.Up:
+        //            case Key.Down:
+        //                if (HandleScrollKeys(e.Key))
+        //                {
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        switch (e.Key)
+        //        {
+        //            case Key.PageUp:
+        //            case Key.PageDown:
+        //                if (SelectedContainer != null)
+        //                {
+        //                    if (HandleScrollByPage(e.Key == Key.PageUp))
+        //                    {
+        //                        e.Handled = true;
+        //                    }
+        //                    break;
+        //                }
+        //                if (FocusFirstItem())
+        //                {
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //            case Key.Home:
+        //                if (FocusFirstItem())
+        //                {
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //            case Key.End:
+        //                if (FocusLastItem())
+        //                {
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //            case Key.Up:
+        //            case Key.Down:
+        //                if (SelectedContainer == null && FocusFirstItem())
+        //                {
+        //                    e.Handled = true;
+        //                }
+        //                break;
+        //        }
+        //    }
+        //}
 
-        /// <summary>
-        /// Handle keys related to scrolling.
-        /// </summary>
-        /// <param name="key">The key to handle.</param>
-        /// <returns>A value indicating whether the key was handled.</returns>
-        private bool HandleScrollKeys(Key key)
-        {
-            ScrollViewer scrollHost = ItemsControlHelper.ScrollHost;
-            if (scrollHost != null)
-            {
-                // Some keys (e.g. Left/Right) need to be translated in RightToLeft mode
-                Key invariantKey = InteractionHelper.GetLogicalKey(FlowDirection, key);
+        ///// <summary>
+        ///// Handle keys related to scrolling.
+        ///// </summary>
+        ///// <param name="key">The key to handle.</param>
+        ///// <returns>A value indicating whether the key was handled.</returns>
+        //private bool HandleScrollKeys(Key key)
+        //{
+        //    ScrollViewer scrollHost = ItemsControlHelper.ScrollHost;
+        //    if (scrollHost != null)
+        //    {
+        //        // Some keys (e.g. Left/Right) need to be translated in RightToLeft mode
+        //        Key invariantKey = InteractionHelper.GetLogicalKey(FlowDirection, key);
 
-                switch (invariantKey)
-                {
-                    case Key.PageUp:
-                        // Move horizontally if we've run out of room vertically
-                        if (!NumericExtensions.IsGreaterThan(scrollHost.ExtentHeight, scrollHost.ViewportHeight))
-                        {
-                            scrollHost.PageLeft();
-                        }
-                        else
-                        {
-                            scrollHost.PageUp();
-                        }
-                        return true;
-                    case Key.PageDown:
-                        // Move horizontally if we've run out of room vertically
-                        if (!NumericExtensions.IsGreaterThan(scrollHost.ExtentHeight, scrollHost.ViewportHeight))
-                        {
-                            scrollHost.PageRight();
-                        }
-                        else
-                        {
-                            scrollHost.PageDown();
-                        }
-                        return true;
-                    case Key.Home:
-                        scrollHost.ScrollToTop();
-                        return true;
-                    case Key.End:
-                        scrollHost.ScrollToBottom();
-                        return true;
-                    case Key.Left:
-                        scrollHost.LineLeft();
-                        return true;
-                    case Key.Right:
-                        scrollHost.LineRight();
-                        return true;
-                    case Key.Up:
-                        scrollHost.LineUp();
-                        return true;
-                    case Key.Down:
-                        scrollHost.LineDown();
-                        return true;
-                }
-            }
-            return false;
-        }
+        //        switch (invariantKey)
+        //        {
+        //            case Key.PageUp:
+        //                // Move horizontally if we've run out of room vertically
+        //                if (!NumericExtensions.IsGreaterThan(scrollHost.ExtentHeight, scrollHost.ViewportHeight))
+        //                {
+        //                    scrollHost.PageLeft();
+        //                }
+        //                else
+        //                {
+        //                    scrollHost.PageUp();
+        //                }
+        //                return true;
+        //            case Key.PageDown:
+        //                // Move horizontally if we've run out of room vertically
+        //                if (!NumericExtensions.IsGreaterThan(scrollHost.ExtentHeight, scrollHost.ViewportHeight))
+        //                {
+        //                    scrollHost.PageRight();
+        //                }
+        //                else
+        //                {
+        //                    scrollHost.PageDown();
+        //                }
+        //                return true;
+        //            case Key.Home:
+        //                scrollHost.ScrollToTop();
+        //                return true;
+        //            case Key.End:
+        //                scrollHost.ScrollToBottom();
+        //                return true;
+        //            case Key.Left:
+        //                scrollHost.LineLeft();
+        //                return true;
+        //            case Key.Right:
+        //                scrollHost.LineRight();
+        //                return true;
+        //            case Key.Up:
+        //                scrollHost.LineUp();
+        //                return true;
+        //            case Key.Down:
+        //                scrollHost.LineDown();
+        //                return true;
+        //        }
+        //    }
+        //    return false;
+        //}
 
-        /// <summary>
-        /// Handle scrolling a page up or down.
-        /// </summary>
-        /// <param name="up">
-        /// A value indicating whether the page should be scrolled up.
-        /// </param>
-        /// <returns>
-        /// A value indicating whether the scroll was handled.
-        /// </returns>
-        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Necessary complexity")]
-        private bool HandleScrollByPage(bool up)
-        {
-            // NOTE: This implementation assumes that items are laid out
-            // vertically and the Headers of the TreeViewItems appear above
-            // their ItemsPresenter.  The same assumptions are made in WPF.
+        ///// <summary>
+        ///// Handle scrolling a page up or down.
+        ///// </summary>
+        ///// <param name="up">
+        ///// A value indicating whether the page should be scrolled up.
+        ///// </param>
+        ///// <returns>
+        ///// A value indicating whether the scroll was handled.
+        ///// </returns>
+        //[SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Necessary complexity")]
+        //private bool HandleScrollByPage(bool up)
+        //{
+        //    // NOTE: This implementation assumes that items are laid out
+        //    // vertically and the Headers of the TreeViewItems appear above
+        //    // their ItemsPresenter.  The same assumptions are made in WPF.
 
-            ScrollViewer scrollHost = ItemsControlHelper.ScrollHost;
-            if (scrollHost != null)
-            {
-                double viewportHeight = scrollHost.ViewportHeight;
+        //    ScrollViewer scrollHost = ItemsControlHelper.ScrollHost;
+        //    if (scrollHost != null)
+        //    {
+        //        double viewportHeight = scrollHost.ViewportHeight;
                 
-                double top;
-                double bottom;
-                (SelectedContainer.HeaderElement ?? SelectedContainer).GetTopAndBottom(scrollHost, out top, out bottom);
+        //        double top;
+        //        double bottom;
+        //        (SelectedContainer.HeaderElement ?? SelectedContainer).GetTopAndBottom(scrollHost, out top, out bottom);
 
-                TreeViewItem selected = null;
-                TreeViewItem next = SelectedContainer;
-                ItemsControl parent = SelectedContainer.ParentItemsControl;
+        //        TreeViewItem selected = null;
+        //        TreeViewItem next = SelectedContainer;
+        //        ItemsControl parent = SelectedContainer.ParentItemsControl;
 
-                if (parent != null)
-                {
-                    // We need to start at the root TreeViewItem if we're
-                    // scrolling up, but can start at the SelectedItem if
-                    // scrolling down.
-                    if (up)
-                    {
-                        while (parent != this)
-                        {
-                            TreeViewItem parentItem = parent as TreeViewItem;
-                            if (parentItem == null)
-                            {
-                                break;
-                            }
+        //        if (parent != null)
+        //        {
+        //            // We need to start at the root TreeViewItem if we're
+        //            // scrolling up, but can start at the SelectedItem if
+        //            // scrolling down.
+        //            if (up)
+        //            {
+        //                while (parent != this)
+        //                {
+        //                    TreeViewItem parentItem = parent as TreeViewItem;
+        //                    if (parentItem == null)
+        //                    {
+        //                        break;
+        //                    }
 
-                            ItemsControl grandparent = parentItem.ParentItemsControl;
-                            if (grandparent == null)
-                            {
-                                break;
-                            }
+        //                    ItemsControl grandparent = parentItem.ParentItemsControl;
+        //                    if (grandparent == null)
+        //                    {
+        //                        break;
+        //                    }
 
-                            next = parentItem;
-                            parent = grandparent;
-                        }
-                    }
+        //                    next = parentItem;
+        //                    parent = grandparent;
+        //                }
+        //            }
 
-                    int index = parent.ItemContainerGenerator.IndexFromContainer(next);
-                    int count = parent.Items.Count;
-                    while (parent != null && next != null)
-                    {
-                        if (next.IsEnabled)
-                        {
-                            double delta;
-                            if (next.HandleScrollByPage(up, scrollHost, viewportHeight, top, bottom, out delta))
-                            {
-                                // This item or one of its children was focused
-                                return true;
-                            }
-                            else if (NumericExtensions.IsGreaterThan(delta, viewportHeight))
-                            {
-                                // If the item doesn't fit on the page but it's
-                                // already selected, we'll select the next item
-                                // even though it doesn't completely fit into
-                                // the current view
-                                if (selected == SelectedContainer || selected == null)
-                                {
-                                    return up ?
-                                        SelectedContainer.HandleUpKey() :
-                                        SelectedContainer.HandleDownKey();
-                                }
-                                break;
-                            }
-                            else
-                            {
-                                selected = next;
-                            }
-                        }
+        //            int index = parent.ItemContainerGenerator.IndexFromContainer(next);
+        //            int count = parent.Items.Count;
+        //            while (parent != null && next != null)
+        //            {
+        //                if (next.IsEnabled)
+        //                {
+        //                    double delta;
+        //                    if (next.HandleScrollByPage(up, scrollHost, viewportHeight, top, bottom, out delta))
+        //                    {
+        //                        // This item or one of its children was focused
+        //                        return true;
+        //                    }
+        //                    else if (NumericExtensions.IsGreaterThan(delta, viewportHeight))
+        //                    {
+        //                        // If the item doesn't fit on the page but it's
+        //                        // already selected, we'll select the next item
+        //                        // even though it doesn't completely fit into
+        //                        // the current view
+        //                        if (selected == SelectedContainer || selected == null)
+        //                        {
+        //                            return up ?
+        //                                SelectedContainer.HandleUpKey() :
+        //                                SelectedContainer.HandleDownKey();
+        //                        }
+        //                        break;
+        //                    }
+        //                    else
+        //                    {
+        //                        selected = next;
+        //                    }
+        //                }
 
-                        index += up ? -1 : 1;
-                        if (0 <= index && index < count)
-                        {
-                            next = parent.ItemContainerGenerator.ContainerFromIndex(index) as TreeViewItem;
-                        }
-                        else if (parent == this)
-                        {
-                            // We just finished with the last item in the
-                            // TreeView
-                            next = null;
-                        }
-                        else
-                        {
-                            // Move up the parent chain to the next item
-                            while (parent != null)
-                            {
-                                TreeViewItem oldParent = parent as TreeViewItem;
-                                parent = oldParent.ParentItemsControl;
-                                if (parent != null)
-                                {
-                                    count = parent.Items.Count;
-                                    index = parent.ItemContainerGenerator.IndexFromContainer(oldParent) + (up ? -1 : 1);
-                                    if (0 <= index && index < count)
-                                    {
-                                        next = parent.ItemContainerGenerator.ContainerFromIndex(index) as TreeViewItem;
-                                        break;
-                                    }
-                                    else if (parent == this)
-                                    {
-                                        next = null;
-                                        parent = null;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        //                index += up ? -1 : 1;
+        //                if (0 <= index && index < count)
+        //                {
+        //                    next = parent.ItemContainerGenerator.ContainerFromIndex(index) as TreeViewItem;
+        //                }
+        //                else if (parent == this)
+        //                {
+        //                    // We just finished with the last item in the
+        //                    // TreeView
+        //                    next = null;
+        //                }
+        //                else
+        //                {
+        //                    // Move up the parent chain to the next item
+        //                    while (parent != null)
+        //                    {
+        //                        TreeViewItem oldParent = parent as TreeViewItem;
+        //                        parent = oldParent.ParentItemsControl;
+        //                        if (parent != null)
+        //                        {
+        //                            count = parent.Items.Count;
+        //                            index = parent.ItemContainerGenerator.IndexFromContainer(oldParent) + (up ? -1 : 1);
+        //                            if (0 <= index && index < count)
+        //                            {
+        //                                next = parent.ItemContainerGenerator.ContainerFromIndex(index) as TreeViewItem;
+        //                                break;
+        //                            }
+        //                            else if (parent == this)
+        //                            {
+        //                                next = null;
+        //                                parent = null;
+        //                            }
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
 
-                if (selected != null)
-                {
-                    if (up)
-                    {
-                        if (selected != SelectedContainer)
-                        {
-                            return selected.Focus();
-                        }
-                    }
-                    else
-                    {
-                        selected.FocusInto();
-                    }
-                }
-            }
+        //        if (selected != null)
+        //        {
+        //            if (up)
+        //            {
+        //                if (selected != SelectedContainer)
+        //                {
+        //                    return selected.Focus();
+        //                }
+        //            }
+        //            else
+        //            {
+        //                selected.FocusInto();
+        //            }
+        //        }
+        //    }
             
-            return false;
-        }
+        //    return false;
+        //}
 
-        /// <summary>
-        /// Provides handling for the KeyUp event.
-        /// </summary>
-        /// <param name="e">Event arguments.</param>
-        protected override void OnKeyUp(KeyEventArgs e)
-        {
-            if (Interaction.AllowKeyUp(e))
-            {
-                base.OnKeyUp(e);
-            }
-        }
+        /////// <summary>
+        /////// Provides handling for the KeyUp event.
+        /////// </summary>
+        /////// <param name="e">Event arguments.</param>
+        ////protected override void OnKeyUp(KeyEventArgs e)
+        ////{
+        ////    if (Interaction.AllowKeyUp(e))
+        ////    {
+        ////        base.OnKeyUp(e);
+        ////    }
+        ////}
 
-        /// <summary>
-        /// Provides handling for the MouseEnter event.
-        /// </summary>
-        /// <param name="e">Event arguments.</param>
-        protected override void OnMouseEnter(MouseEventArgs e)
-        {
-            if (Interaction.AllowMouseEnter(e))
-            {
-                Interaction.OnMouseEnterBase();
-                base.OnMouseEnter(e);
-            }
-        }
+        /////// <summary>
+        /////// Provides handling for the MouseEnter event.
+        /////// </summary>
+        /////// <param name="e">Event arguments.</param>
+        ////protected override void OnMouseEnter(MouseEventArgs e)
+        ////{
+        ////    if (Interaction.AllowMouseEnter(e))
+        ////    {
+        ////        Interaction.OnMouseEnterBase();
+        ////        base.OnMouseEnter(e);
+        ////    }
+        ////}
 
-        /// <summary>
-        /// Provides handling for the MouseLeave event.
-        /// </summary>
-        /// <param name="e">Event arguments.</param>
-        protected override void OnMouseLeave(MouseEventArgs e)
-        {
-            if (Interaction.AllowMouseLeave(e))
-            {
-                Interaction.OnMouseLeaveBase();
-                base.OnMouseLeave(e);
-            }
-        }
+        /////// <summary>
+        /////// Provides handling for the MouseLeave event.
+        /////// </summary>
+        /////// <param name="e">Event arguments.</param>
+        ////protected override void OnMouseLeave(MouseEventArgs e)
+        ////{
+        ////    if (Interaction.AllowMouseLeave(e))
+        ////    {
+        ////        Interaction.OnMouseLeaveBase();
+        ////        base.OnMouseLeave(e);
+        ////    }
+        ////}
 
-        /// <summary>
-        /// Provides handling for the MouseMove event.
-        /// </summary>
-        /// <param name="e">Event arguments.</param>
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
-        }
+        /////// <summary>
+        /////// Provides handling for the MouseMove event.
+        /////// </summary>
+        /////// <param name="e">Event arguments.</param>
+        ////protected override void OnMouseMove(MouseEventArgs e)
+        ////{
+        ////    base.OnMouseMove(e);
+        ////}
 
-        /// <summary>
-        /// Provides handling for the
-        /// <see cref="E:System.Windows.UIElement.MouseLeftButtonDown" />
-        /// event.
-        /// </summary>
-        /// <param name="e">
-        /// A <see cref="T:System.Windows.Input.MouseButtonEventArgs" /> that
-        /// contains the event data.
-        /// </param>
-        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
-        {
-            if (Interaction.AllowMouseLeftButtonDown(e))
-            {
-                if (!e.Handled && HandleMouseButtonDown())
-                {
-                    e.Handled = true;
-                }
+        /////// <summary>
+        /////// Provides handling for the
+        /////// <see cref="E:System.Windows.UIElement.MouseLeftButtonDown" />
+        /////// event.
+        /////// </summary>
+        /////// <param name="e">
+        /////// A <see cref="T:System.Windows.Input.MouseButtonEventArgs" /> that
+        /////// contains the event data.
+        /////// </param>
+        ////protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        ////{
+        ////    if (Interaction.AllowMouseLeftButtonDown(e))
+        ////    {
+        ////        if (!e.Handled && HandleMouseButtonDown())
+        ////        {
+        ////            e.Handled = true;
+        ////        }
 
-                Interaction.OnMouseLeftButtonDownBase();
-                base.OnMouseLeftButtonDown(e);
-            }            
-        }
+        ////        Interaction.OnMouseLeftButtonDownBase();
+        ////        base.OnMouseLeftButtonDown(e);
+        ////    }            
+        ////}
 
-        /// <summary>
-        /// Provides handling for the MouseLeftButtonUp event.
-        /// </summary>
-        /// <param name="e">Event arguments.</param>
-        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
-        {
-            if (Interaction.AllowMouseLeftButtonUp(e))
-            {
-                Interaction.OnMouseLeftButtonUpBase();
-                base.OnMouseLeftButtonUp(e);
-            }
-        }
+        /////// <summary>
+        /////// Provides handling for the MouseLeftButtonUp event.
+        /////// </summary>
+        /////// <param name="e">Event arguments.</param>
+        ////protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        ////{
+        ////    if (Interaction.AllowMouseLeftButtonUp(e))
+        ////    {
+        ////        Interaction.OnMouseLeftButtonUpBase();
+        ////        base.OnMouseLeftButtonUp(e);
+        ////    }
+        ////}
 
-        /// <summary>
-        /// Provides handling for mouse button events.
-        /// </summary>
-        /// <returns>A value indicating whether the event was handled.</returns>
-        internal bool HandleMouseButtonDown()
-        {
-            if (SelectedContainer != null)
-            {
-                if (SelectedContainer != FocusManager.GetFocusedElement())
-                {
-                    SelectedContainer.Focus();
-                }
-                return true;
-            }
+        ///// <summary>
+        ///// Provides handling for mouse button events.
+        ///// </summary>
+        ///// <returns>A value indicating whether the event was handled.</returns>
+        //internal bool HandleMouseButtonDown()
+        //{
+        //    if (SelectedContainer != null)
+        //    {
+        //        if (SelectedContainer != FocusManager.GetFocusedElement())
+        //        {
+        //            SelectedContainer.Focus();
+        //        }
+        //        return true;
+        //    }
 
-            return false;
-        }
+        //    return false;
+        //}
 
-        /// <summary>
-        /// Provides handling for the GotFocus event.
-        /// </summary>
-        /// <param name="e">Event arguments.</param>
-        protected override void OnGotFocus(RoutedEventArgs e)
-        {
-            if (Interaction.AllowGotFocus(e))
-            {
-                Interaction.OnGotFocusBase();
-                base.OnGotFocus(e);
-            }
-        }
+        ///// <summary>
+        ///// Provides handling for the GotFocus event.
+        ///// </summary>
+        ///// <param name="e">Event arguments.</param>
+        //protected override void OnGotFocus(RoutedEventArgs e)
+        //{
+        //    if (Interaction.AllowGotFocus(e))
+        //    {
+        //        Interaction.OnGotFocusBase();
+        //        base.OnGotFocus(e);
+        //    }
+        //}
 
-        /// <summary>
-        /// Provides handling for the LostFocus event.
-        /// </summary>
-        /// <param name="e">Event arguments.</param>
-        protected override void OnLostFocus(RoutedEventArgs e)
-        {
-            if (Interaction.AllowLostFocus(e))
-            {
-                Interaction.OnLostFocusBase();
-                base.OnLostFocus(e);
-            }
-        }
+        ///// <summary>
+        ///// Provides handling for the LostFocus event.
+        ///// </summary>
+        ///// <param name="e">Event arguments.</param>
+        //protected override void OnLostFocus(RoutedEventArgs e)
+        //{
+        //    if (Interaction.AllowLostFocus(e))
+        //    {
+        //        Interaction.OnLostFocusBase();
+        //        base.OnLostFocus(e);
+        //    }
+        //}
         #endregion Input Events
 
         #region Selection
@@ -1033,14 +1020,14 @@ namespace System.Windows.Controls
         /// A <see cref="T:System.Windows.RoutedPropertyChangedEventArgs`1" />
         /// that contains the event data.
         /// </param>
-        protected virtual void OnSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
-        {
-            RoutedPropertyChangedEventHandler<object> handler = SelectedItemChanged;
-            if (handler != null)
-            {
-                handler(this, e);
-            }
-        }
+  //      protected virtual void OnSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
+  //      {
+		//	RoutedPropertyChangedEventHandler<object> handler = SelectedItemChanged;
+		//	if (handler != null)
+		//	{
+		//		handler(this, e);
+		//	}
+		//}
 
         /// <summary>
         /// Change whether a TreeViewItem is selected.
@@ -1135,7 +1122,7 @@ namespace System.Windows.Controls
                     }
                 }
 
-                OnSelectedItemChanged(new RoutedPropertyChangedEventArgs<object>(oldValue, newValue));
+                // OnSelectedItemChanged(new RoutedPropertyChangedEventArgs<object>(oldValue, newValue));
             }
         }
 
@@ -1160,7 +1147,7 @@ namespace System.Windows.Controls
                     // Since we don't have the ability to evaluate a
                     // BindingExpression, we'll just create a new temporary
                     // control to bind the value to which we can then copy out
-                    Binding binding = new Binding(path) { Source = item };
+                    Binding binding = new Binding() { Path = new PropertyPath(path), Source = item };
                     ContentControl temp = new ContentControl();
                     temp.SetBinding(ContentControl.ContentProperty, binding);
                     SelectedValue = temp.Content;
@@ -1208,7 +1195,7 @@ namespace System.Windows.Controls
             // Get the first item in the TreeView.
             TreeViewItem item = ItemContainerGenerator.ContainerFromIndex(0) as TreeViewItem;
             return (item != null) ?
-                (item.IsEnabled && item.Focus()) || item.FocusDown() :
+                (item.IsEnabled && item.Focus(FocusState.Programmatic)) || item.FocusDown() :
                 false;
         }
 

@@ -6,8 +6,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Windows.Automation.Provider;
 using System.Windows.Controls;
+using Windows.UI.Xaml.Automation.Peers;
+using Windows.UI.Xaml.Automation.Provider;
+using Windows.UI.Xaml.Controls;
 
 [assembly: SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Scope = "member", Target = "System.Windows.Automation.Peers.TreeViewAutomationPeer.#System.Windows.Automation.Provider.ISelectionProvider.CanSelectMultiple", Justification = "Required for subset compat with WPF")]
 [assembly: SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Scope = "member", Target = "System.Windows.Automation.Peers.TreeViewAutomationPeer.#System.Windows.Automation.Provider.ISelectionProvider.GetSelection()", Justification = "Required for subset compat with WPF")]
@@ -25,9 +27,9 @@ namespace System.Windows.Automation.Peers
         /// <summary>
         /// Gets the TreeView that owns this TreeViewAutomationPeer.
         /// </summary>
-        private TreeView OwnerTreeView
+        private Controls.TreeView OwnerTreeView
         {
-            get { return (TreeView) Owner; }
+            get { return (Controls.TreeView) Owner; }
         }
 
         /// <summary>
@@ -72,7 +74,7 @@ namespace System.Windows.Automation.Peers
         /// with the
         /// <see cref="T:System.Windows.Automation.Peers.TreeViewAutomationPeer" />.
         /// </param>
-        public TreeViewAutomationPeer(TreeView owner)
+        public TreeViewAutomationPeer(Controls.TreeView owner)
             : base(owner)
         {
         }
@@ -122,29 +124,29 @@ namespace System.Windows.Automation.Peers
         /// The object that implements the pattern interface, or null if the
         /// specified pattern interface is not implemented by this peer.
         /// </returns>
-        public override object GetPattern(PatternInterface patternInterface)
-        {
-            if (patternInterface == PatternInterface.Selection)
-            {
-                return this;
-            }
-            else if (patternInterface == PatternInterface.Scroll)
-            {
-                ScrollViewer scroll = OwnerTreeView.ItemsControlHelper.ScrollHost;
-                if (scroll != null)
-                {
-                    AutomationPeer peer = FrameworkElementAutomationPeer.CreatePeerForElement(scroll);
-                    IScrollProvider provider = peer as IScrollProvider;
-                    if (provider != null)
-                    {
-                        peer.EventsSource = this;
-                        return provider;
-                    }
-                }
-            }
+        //public override object GetPattern(PatternInterface patternInterface)
+        //{
+        //    if (patternInterface == PatternInterface.Selection)
+        //    {
+        //        return this;
+        //    }
+        //    else if (patternInterface == PatternInterface.Scroll)
+        //    {
+        //        ScrollViewer scroll = OwnerTreeView.ItemsControlHelper.ScrollHost;
+        //        if (scroll != null)
+        //        {
+        //            AutomationPeer peer = FrameworkElementAutomationPeer.CreatePeerForElement(scroll);
+        //            IScrollProvider provider = peer as IScrollProvider;
+        //            if (provider != null)
+        //            {
+        //                peer.EventsSource = this;
+        //                return provider;
+        //            }
+        //        }
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
         /// <summary>
         /// Gets the collection of child elements of the
@@ -154,9 +156,9 @@ namespace System.Windows.Automation.Peers
         /// </summary>
         /// <returns>The collection of child elements.</returns>
         [SuppressMessage("Microsoft.Design", "CA1002:DoNotExposeGenericLists", Justification = "Required by automation")]
-        protected override List<AutomationPeer> GetChildrenCore()
+        protected override IList<AutomationPeer> GetChildrenCore()
         {
-            TreeView owner = OwnerTreeView;
+			Controls.TreeView owner = OwnerTreeView;
             
             ItemCollection items = owner.Items;
             if (items.Count <= 0)
@@ -167,7 +169,7 @@ namespace System.Windows.Automation.Peers
             List<AutomationPeer> peers = new List<AutomationPeer>(items.Count);
             for (int i = 0; i < items.Count; i++)
             {
-                TreeViewItem element = owner.ItemContainerGenerator.ContainerFromIndex(i) as TreeViewItem;
+                Controls.TreeViewItem element = owner.ItemContainerGenerator.ContainerFromIndex(i) as Controls.TreeViewItem;
                 if (element != null)
                 {
                     peers.Add(
@@ -192,7 +194,7 @@ namespace System.Windows.Automation.Peers
         {
             IRawElementProviderSimple[] selection = null;
 
-            TreeViewItem selectedItem = OwnerTreeView.SelectedContainer;
+			Controls.TreeViewItem selectedItem = OwnerTreeView.SelectedContainer;
             if (selectedItem != null)
             {
                 AutomationPeer peer = FrameworkElementAutomationPeer.FromElement(selectedItem);

@@ -5,8 +5,11 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Windows.Automation.Provider;
 using System.Windows.Controls;
+using Windows.UI.Xaml.Automation;
+using Windows.UI.Xaml.Automation.Peers;
+using Windows.UI.Xaml.Automation.Provider;
+using Windows.UI.Xaml.Controls;
 
 [assembly: SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Scope = "member", Target = "System.Windows.Automation.Peers.TreeViewItemAutomationPeer.#System.Windows.Automation.Provider.IExpandCollapseProvider.Collapse()", Justification = "Required for subset compat with WPF")]
 [assembly: SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Scope = "member", Target = "System.Windows.Automation.Peers.TreeViewItemAutomationPeer.#System.Windows.Automation.Provider.IExpandCollapseProvider.Expand()", Justification = "Required for subset compat with WPF")]
@@ -31,9 +34,9 @@ namespace System.Windows.Automation.Peers
         /// <summary>
         /// Gets the TreeViewItem that owns this TreeViewItemAutomationPeer.
         /// </summary>
-        private TreeViewItem OwnerTreeViewItem
+        private Controls.TreeViewItem OwnerTreeViewItem
         {
-            get { return (TreeViewItem) Owner; }
+            get { return (Controls.TreeViewItem) Owner; }
         }
 
         /// <summary>
@@ -50,7 +53,7 @@ namespace System.Windows.Automation.Peers
         {
             get
             {
-                TreeViewItem owner = OwnerTreeViewItem;
+                Controls.TreeViewItem owner = OwnerTreeViewItem;
                 if (!owner.HasItems)
                 {
                     return ExpandCollapseState.LeafNode;
@@ -116,7 +119,7 @@ namespace System.Windows.Automation.Peers
         /// to associate with this
         /// <see cref="T:System.Windows.Automation.Peers.TreeViewItemAutomationPeer" />.
         /// </param>
-        public TreeViewItemAutomationPeer(TreeViewItem owner)
+        public TreeViewItemAutomationPeer(Controls.TreeViewItem owner)
             : base(owner)
         {
         }
@@ -166,17 +169,17 @@ namespace System.Windows.Automation.Peers
         /// The object that implements the pattern interface, or null if the
         /// specified pattern interface is not implemented by this peer.
         /// </returns>
-        public override object GetPattern(PatternInterface patternInterface)
-        {
-            if (patternInterface == PatternInterface.ExpandCollapse ||
-                patternInterface == PatternInterface.SelectionItem ||
-                patternInterface == PatternInterface.ScrollItem)
-            {
-                return this;
-            }
+        //public override object GetPattern(PatternInterface patternInterface)
+        //{
+        //    if (patternInterface == PatternInterface.ExpandCollapse ||
+        //        patternInterface == PatternInterface.SelectionItem ||
+        //        patternInterface == PatternInterface.ScrollItem)
+        //    {
+        //        return this;
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
         /// <summary>
         /// Raise the IsSelected property changed event.
@@ -221,10 +224,10 @@ namespace System.Windows.Automation.Peers
                 throw new ElementNotEnabledException();
             }
 
-            TreeViewItem owner = OwnerTreeViewItem;
+			Controls.TreeViewItem owner = OwnerTreeViewItem;
             if (!owner.HasItems)
             {
-                throw new InvalidOperationException(Controls.Properties.Resources.Automation_OperationCannotBePerformed);
+                throw new InvalidOperationException(/*Controls.Properties.Resources.Automation_OperationCannotBePerformed*/);
             }
 
             owner.IsExpanded = true;
@@ -245,10 +248,10 @@ namespace System.Windows.Automation.Peers
                 throw new ElementNotEnabledException();
             }
 
-            TreeViewItem owner = OwnerTreeViewItem;
+			Controls.TreeViewItem owner = OwnerTreeViewItem;
             if (!owner.HasItems)
             {
-                throw new InvalidOperationException(Controls.Properties.Resources.Automation_OperationCannotBePerformed);
+                throw new InvalidOperationException(/*Controls.Properties.Resources.Automation_OperationCannotBePerformed*/);
             }
 
             owner.IsExpanded = false;
@@ -263,11 +266,11 @@ namespace System.Windows.Automation.Peers
         /// </remarks>
         void ISelectionItemProvider.AddToSelection()
         {
-            TreeViewItem owner = OwnerTreeViewItem;
-            TreeView parent = owner.ParentTreeView;
+			Controls.TreeViewItem owner = OwnerTreeViewItem;
+			Controls.TreeView parent = owner.ParentTreeView;
             if (parent == null || (parent.SelectedItem != null && parent.SelectedContainer != Owner))
             {
-                throw new InvalidOperationException(Controls.Properties.Resources.Automation_OperationCannotBePerformed);
+                throw new InvalidOperationException(/*Controls.Properties.Resources.Automation_OperationCannotBePerformed*/);
             }
             owner.IsSelected = true;
         }
@@ -306,15 +309,15 @@ namespace System.Windows.Automation.Peers
         /// </remarks>
         void IScrollItemProvider.ScrollIntoView()
         {
-            // Note: WPF just calls BringIntoView on the current TreeViewItem.
-            // This actually raises an event that can be handled by the
-            // its containers.  Silverlight doesn't support this, so we will
-            // approximate by moving scrolling the TreeView's ScrollHost to the
-            // item.
+			// Note: WPF just calls BringIntoView on the current TreeViewItem.
+			// This actually raises an event that can be handled by the
+			// its containers.  Silverlight doesn't support this, so we will
+			// approximate by moving scrolling the TreeView's ScrollHost to the
+			// item.
 
-            // Get the parent TreeView
-            TreeViewItem owner = OwnerTreeViewItem;
-            TreeView parent = owner.ParentTreeView;
+			// Get the parent TreeView
+			Controls.TreeViewItem owner = OwnerTreeViewItem;
+			Controls.TreeView parent = owner.ParentTreeView;
             if (parent == null)
             {
                 return;

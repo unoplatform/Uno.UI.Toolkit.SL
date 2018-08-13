@@ -6,9 +6,10 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
+using Windows.Devices.Input;
+using Windows.Foundation;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 
 namespace System.Windows.Controls
 {
@@ -364,55 +365,55 @@ namespace System.Windows.Controls
         /// <returns>
         /// A value indicating whether the event should be handled.
         /// </returns>
-        public bool AllowMouseLeftButtonDown(MouseButtonEventArgs e)
-        {
-            if (e == null)
-            {
-                throw new ArgumentNullException("e");
-            }
+        //public bool AllowMouseLeftButtonDown(MouseButtonEventArgs e)
+        //{
+        //    if (e == null)
+        //    {
+        //        throw new ArgumentNullException("e");
+        //    }
 
-            bool enabled = Control.IsEnabled;
-            if (enabled)
-            {
-                // Get the current position and time
-                DateTime now = DateTime.UtcNow;
-                Point position = e.GetPosition(Control);
+        //    bool enabled = Control.IsEnabled;
+        //    if (enabled)
+        //    {
+        //        // Get the current position and time
+        //        DateTime now = DateTime.UtcNow;
+        //        Point position = e.GetPosition(Control);
 
-                // Compute the deltas from the last click
-                double timeDelta = (now - LastClickTime).TotalMilliseconds;
-                Point lastPosition = LastClickPosition;
-                double dx = position.X - lastPosition.X;
-                double dy = position.Y - lastPosition.Y;
-                double distance = dx * dx + dy * dy;
+        //        // Compute the deltas from the last click
+        //        double timeDelta = (now - LastClickTime).TotalMilliseconds;
+        //        Point lastPosition = LastClickPosition;
+        //        double dx = position.X - lastPosition.X;
+        //        double dy = position.Y - lastPosition.Y;
+        //        double distance = dx * dx + dy * dy;
 
-                // Check if the values fall under the sequential click temporal
-                // and spatial thresholds
-                if (timeDelta < SequentialClickThresholdInMilliseconds &&
-                    distance < SequentialClickThresholdInPixelsSquared)
-                {
-                    // TODO: Does each click have to be within the single time
-                    // threshold on WPF?
-                    ClickCount++;
-                }
-                else
-                {
-                    ClickCount = 1;
-                }
+        //        // Check if the values fall under the sequential click temporal
+        //        // and spatial thresholds
+        //        if (timeDelta < SequentialClickThresholdInMilliseconds &&
+        //            distance < SequentialClickThresholdInPixelsSquared)
+        //        {
+        //            // TODO: Does each click have to be within the single time
+        //            // threshold on WPF?
+        //            ClickCount++;
+        //        }
+        //        else
+        //        {
+        //            ClickCount = 1;
+        //        }
 
-                // Set the new position and time
-                LastClickTime = now;
-                LastClickPosition = position;
+        //        // Set the new position and time
+        //        LastClickTime = now;
+        //        LastClickPosition = position;
 
-                // Raise the event
-                IsPressed = true;
-            }
-            else
-            {
-                ClickCount = 1;
-            }
+        //        // Raise the event
+        //        IsPressed = true;
+        //    }
+        //    else
+        //    {
+        //        ClickCount = 1;
+        //    }
 
-            return enabled;
-        }
+        //    return enabled;
+        //}
 
         /// <summary>
         /// Base implementation of the virtual MouseLeftButtonDown event
@@ -432,20 +433,20 @@ namespace System.Windows.Controls
         /// <returns>
         /// A value indicating whether the event should be handled.
         /// </returns>
-        public bool AllowMouseLeftButtonUp(MouseButtonEventArgs e)
-        {
-            if (e == null)
-            {
-                throw new ArgumentNullException("e");
-            }
+        //public bool AllowMouseLeftButtonUp(MouseButtonEventArgs e)
+        //{
+        //    if (e == null)
+        //    {
+        //        throw new ArgumentNullException("e");
+        //    }
 
-            bool enabled = Control.IsEnabled;
-            if (enabled)
-            {
-                IsPressed = false;
-            }
-            return enabled;
-        }
+        //    bool enabled = Control.IsEnabled;
+        //    if (enabled)
+        //    {
+        //        IsPressed = false;
+        //    }
+        //    return enabled;
+        //}
 
         /// <summary>
         /// Base implementation of the virtual MouseLeftButtonUp event handler.
@@ -464,15 +465,15 @@ namespace System.Windows.Controls
         /// <returns>
         /// A value indicating whether the event should be handled.
         /// </returns>
-        public bool AllowKeyDown(KeyEventArgs e)
-        {
-            if (e == null)
-            {
-                throw new ArgumentNullException("e");
-            }
+        //public bool AllowKeyDown(KeyEventArgs e)
+        //{
+        //    if (e == null)
+        //    {
+        //        throw new ArgumentNullException("e");
+        //    }
 
-            return Control.IsEnabled;
-        }
+        //    return Control.IsEnabled;
+        //}
         #endregion KeyDown
 
         #region KeyUp
@@ -483,15 +484,15 @@ namespace System.Windows.Controls
         /// <returns>
         /// A value indicating whether the event should be handled.
         /// </returns>
-        public bool AllowKeyUp(KeyEventArgs e)
-        {
-            if (e == null)
-            {
-                throw new ArgumentNullException("e");
-            }
+        //public bool AllowKeyUp(KeyEventArgs e)
+        //{
+        //    if (e == null)
+        //    {
+        //        throw new ArgumentNullException("e");
+        //    }
 
-            return Control.IsEnabled;
-        }
+        //    return Control.IsEnabled;
+        //}
         #endregion KeyUp
 
         #region RightToLeft key translation
@@ -503,24 +504,24 @@ namespace System.Windows.Controls
         /// <returns>
         /// A translated key code, indicating how the original key should be interpreted.
         /// </returns>
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Linked file.")]
-        public static Key GetLogicalKey(FlowDirection flowDirection, Key originalKey)
-        {
-            Key result = originalKey;
-            if (flowDirection == FlowDirection.RightToLeft)
-            {
-                switch (originalKey)
-                {
-                    case Key.Left:
-                        result = Key.Right;
-                        break;
-                    case Key.Right:
-                        result = Key.Left;
-                        break;
-                }
-            }
-            return result;
-        }
+        //[SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Linked file.")]
+        //public static Key GetLogicalKey(FlowDirection flowDirection, Key originalKey)
+        //{
+        //    Key result = originalKey;
+        //    if (flowDirection == FlowDirection.RightToLeft)
+        //    {
+        //        switch (originalKey)
+        //        {
+        //            case Key.Left:
+        //                result = Key.Right;
+        //                break;
+        //            case Key.Right:
+        //                result = Key.Left;
+        //                break;
+        //        }
+        //    }
+        //    return result;
+        //}
         #endregion
     }
 }

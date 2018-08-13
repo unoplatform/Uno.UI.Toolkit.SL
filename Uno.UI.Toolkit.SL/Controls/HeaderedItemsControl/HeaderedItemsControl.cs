@@ -11,7 +11,8 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 
 namespace System.Windows.Controls
 {
@@ -61,7 +62,7 @@ namespace System.Windows.Controls
                 "Header",
                 typeof(object),
                 typeof(HeaderedItemsControl),
-                new PropertyMetadata(OnHeaderPropertyChanged));
+                new PropertyMetadata(defaultValue: null, propertyChangedCallback: OnHeaderPropertyChanged));
 
         /// <summary>
         /// HeaderProperty property changed handler.
@@ -111,7 +112,7 @@ namespace System.Windows.Controls
                 "HeaderTemplate",
                 typeof(DataTemplate),
                 typeof(HeaderedItemsControl),
-                new PropertyMetadata(OnHeaderTemplatePropertyChanged));
+                new PropertyMetadata(defaultValue: null, propertyChangedCallback: OnHeaderTemplatePropertyChanged));
 
         /// <summary>
         /// HeaderTemplateProperty property changed handler.
@@ -234,7 +235,7 @@ namespace System.Windows.Controls
         /// <see cref="T:System.Windows.Controls.HeaderedItemsControl" /> when a
         /// new template is applied.
         /// </summary>
-        public override void OnApplyTemplate()
+        protected override void OnApplyTemplate()
         {
             ItemsControlHelper.OnApplyTemplate();
             base.OnApplyTemplate();
@@ -320,42 +321,42 @@ namespace System.Windows.Controls
                 // for the type of the item if the headerTemplate were null.
 
                 // Setup a hierarchical template
-                HierarchicalDataTemplate headerTemplate = parentItemTemplate as HierarchicalDataTemplate;
-                if (headerTemplate != null)
-                {
-                    if (headerTemplate.ItemsSource != null && HasDefaultValue(control, HeaderedItemsControl.ItemsSourceProperty))
-                    {
-                        control.SetBinding(
-                            HeaderedItemsControl.ItemsSourceProperty,
-                            new Binding
-                            {
-                                Converter = headerTemplate.ItemsSource.Converter,
-                                ConverterCulture = headerTemplate.ItemsSource.ConverterCulture,
-                                ConverterParameter = headerTemplate.ItemsSource.ConverterParameter,
-                                Mode = headerTemplate.ItemsSource.Mode,
-                                NotifyOnValidationError = headerTemplate.ItemsSource.NotifyOnValidationError,
-                                Path = headerTemplate.ItemsSource.Path,
-                                Source = control.Header,
-                                ValidatesOnExceptions = headerTemplate.ItemsSource.ValidatesOnExceptions
-                            });
-                    }
-                    if (headerTemplate.IsItemTemplateSet && control.ItemTemplate == parentItemTemplate)
-                    {
-                        control.ClearValue(HeaderedItemsControl.ItemTemplateProperty);
-                        if (headerTemplate.ItemTemplate != null)
-                        {
-                            control.ItemTemplate = headerTemplate.ItemTemplate;
-                        }
-                    }
-                    if (headerTemplate.IsItemContainerStyleSet && control.ItemContainerStyle == parentItemContainerStyle)
-                    {
-                        control.ClearValue(HeaderedItemsControl.ItemContainerStyleProperty);
-                        if (headerTemplate.ItemContainerStyle != null)
-                        {
-                            control.ItemContainerStyle = headerTemplate.ItemContainerStyle;
-                        }
-                    }
-                }
+                //HierarchicalDataTemplate headerTemplate = parentItemTemplate as HierarchicalDataTemplate;
+                //if (headerTemplate != null)
+                //{
+                //    if (headerTemplate.ItemsSource != null && HasDefaultValue(control, HeaderedItemsControl.ItemsSourceProperty))
+                //    {
+                //        control.SetBinding(
+                //            HeaderedItemsControl.ItemsSourceProperty,
+                //            new Binding
+                //            {
+                //                Converter = headerTemplate.ItemsSource.Converter,
+                //                ConverterCulture = headerTemplate.ItemsSource.ConverterCulture,
+                //                ConverterParameter = headerTemplate.ItemsSource.ConverterParameter,
+                //                Mode = headerTemplate.ItemsSource.Mode,
+                //                NotifyOnValidationError = headerTemplate.ItemsSource.NotifyOnValidationError,
+                //                Path = headerTemplate.ItemsSource.Path,
+                //                Source = control.Header,
+                //                ValidatesOnExceptions = headerTemplate.ItemsSource.ValidatesOnExceptions
+                //            });
+                //    }
+                //    if (headerTemplate.IsItemTemplateSet && control.ItemTemplate == parentItemTemplate)
+                //    {
+                //        control.ClearValue(HeaderedItemsControl.ItemTemplateProperty);
+                //        if (headerTemplate.ItemTemplate != null)
+                //        {
+                //            control.ItemTemplate = headerTemplate.ItemTemplate;
+                //        }
+                //    }
+                //    if (headerTemplate.IsItemContainerStyleSet && control.ItemContainerStyle == parentItemContainerStyle)
+                //    {
+                //        control.ClearValue(HeaderedItemsControl.ItemContainerStyleProperty);
+                //        if (headerTemplate.ItemContainerStyle != null)
+                //        {
+                //            control.ItemContainerStyle = headerTemplate.ItemContainerStyle;
+                //        }
+                //    }
+                //}
             }
         }
 
@@ -369,8 +370,8 @@ namespace System.Windows.Controls
         /// </returns>
         private static bool HasDefaultValue(Control control, DependencyProperty property)
         {
-            Debug.Assert(control != null, "control should not be null!");
-            Debug.Assert(property != null, "property should not be null!");
+            System.Diagnostics.Debug.Assert(control != null, "control should not be null!");
+			System.Diagnostics.Debug.Assert(property != null, "property should not be null!");
             return control.ReadLocalValue(property) == DependencyProperty.UnsetValue;
         }
     }
