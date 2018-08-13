@@ -9,6 +9,10 @@
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:controls="using:System.Windows.Controls">
+	
+	<ResourceDictionary.MergedDictionaries>
+		<ResourceDictionary Source="ms-appx:///Uno.UI.Toolkit.SL/Controls/Common/Common.xaml" />
+	</ResourceDictionary.MergedDictionaries>
 
     <Style TargetType="controls:TreeViewItem">
         <Setter Property="Padding" Value="3" />
